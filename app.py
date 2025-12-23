@@ -23,7 +23,7 @@ REPORT_MARKER = os.environ.get("PROOF_REPORT_MARKER", "Комментарии к
 IDLE_DEFAULT_SEC = float(os.environ.get("PROOF_IDLE_DEFAULT_SEC", "15"))
 IDLE_AFTER_STATUS_SEC = float(os.environ.get("PROOF_IDLE_AFTER_STATUS_SEC", "240"))
 IDLE_AFTER_TEXT_SEC = float(os.environ.get("PROOF_IDLE_AFTER_TEXT_SEC", "90"))
-IDLE_AFTER_REPORT_SEC = float(os.environ.get("PROOF_IDLE_AFTER_REPORT_SEC", "8"))
+IDLE_AFTER_REPORT_SEC = float(os.environ.get("PROOF_IDLE_AFTER_REPORT_SEC", "3"))
 
 # Защита от бесконечных цепочек
 MAX_MESSAGES = int(os.environ.get("PROOF_MAX_MESSAGES", "25"))
