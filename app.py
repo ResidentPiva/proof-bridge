@@ -15,6 +15,11 @@ PROOF_BOT = os.environ.get("PROOF_BOT", "@ProofreaderIZbot")
 TIMEOUT_SEC = int(os.environ.get("PROOF_TIMEOUT_SEC", "60"))
 MAX_TEXT = int(os.environ.get("PROOF_MAX_TEXT", "3500"))
 
+# Ждем "хвост" ответов от бота: после первого ответа еще ловим последующие,
+# пока не наступит тишина на TAIL_WAIT_SEC
+TAIL_WAIT_SEC = float(os.environ.get("PROOF_TAIL_WAIT_SEC", "1.5"))
+MAX_REPLIES = int(os.environ.get("PROOF_MAX_REPLIES", "10"))
+
 client = TelegramClient(StringSession(TG_SESSION), TG_API_ID, TG_API_HASH)
 lock = asyncio.Lock()
 
@@ -34,11 +39,36 @@ async def shutdown():
 
 async def ask_proof_bot(text: str) -> str:
     entity = await client.get_entity(PROOF_BOT)
+
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + TIMEOUT_SEC
+
+    def remaining() -> float:
+        return deadline - loop.time()
+
     try:
         async with client.conversation(entity, timeout=TIMEOUT_SEC) as conv:
             await conv.send_message(text)
-            resp = await conv.get_response()
-            return (resp.message or "").strip()
+
+            # 1) Первый ответ — может идти дольше всего
+            first_timeout = max(0.1, remaining())
+            resp = await asyncio.wait_for(conv.get_response(), timeout=first_timeout)
+            last_text = (getattr(resp, "raw_text", None) or getattr(resp, "message", None) or "").strip()
+
+            # 2) Дочитываем "хвост" сообщений: берем последнее из пришедших
+            replies = 1
+            while replies < MAX_REPLIES and remaining() > 0:
+                try:
+                    t = min(TAIL_WAIT_SEC, max(0.1, remaining()))
+                    resp2 = await asyncio.wait_for(conv.get_response(), timeout=t)
+                    last_text = (getattr(resp2, "raw_text", None) or getattr(resp2, "message", None) or "").strip()
+                    replies += 1
+                except asyncio.TimeoutError:
+                    # Тишина -> новых сообщений нет
+                    break
+
+            return last_text
+
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail=f"Timeout: бот не ответил за {TIMEOUT_SEC} сек")
 
