@@ -10,7 +10,7 @@ APP = FastAPI(title="proof-bridge")
 TG_API_ID = int(os.environ["TG_API_ID"])
 TG_API_HASH = os.environ["TG_API_HASH"]
 TG_SESSION = os.environ["TG_SESSION"]
-PROOF_BOT = os.environ.get("PROOF_BOT", "@ProofreaderIZbot")
+PROOF_BOT = os.environ.get("PROOF_BOT", "@CoordinatorUpgradebot")
 
 TIMEOUT_SEC = int(os.environ.get("PROOF_TIMEOUT_SEC", "360"))
 MAX_TEXT = int(os.environ.get("PROOF_MAX_TEXT", "3500"))
